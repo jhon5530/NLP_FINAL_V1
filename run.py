@@ -117,6 +117,7 @@ def main():
     ###########################################################################
     #My prints
     print(" \n ------------- ")
+    print(type(train_dataset))
     [print(ex) for ex in train_dataset] 
 
     print(" \n ------------- ")

@@ -57,6 +57,7 @@ def main():
     if args.dataset.endswith('.json') or args.dataset.endswith('.jsonl'):
         dataset_id = None
         # Load from local json/jsonl file
+        
         dataset = datasets.load_dataset('json', data_files=args.dataset)
         # By default, the "json" dataset loader places all examples in the train split,
         # so if we want to use a jsonl file for evaluation we need to get the "train" split
@@ -66,6 +67,7 @@ def main():
         default_datasets = {'qa': ('squad',), 'nli': ('snli',)}
         dataset_id = tuple(args.dataset.split(':')) if args.dataset is not None else \
             default_datasets[args.task]
+        
         # MNLI has two validation splits (one with matched domains and one with mismatched domains). Most datasets just have one "validation" split
         eval_split = 'validation_matched' if dataset_id == ('glue', 'mnli') else 'validation'
         # Load the raw data
@@ -112,6 +114,14 @@ def main():
             num_proc=NUM_PREPROCESSING_WORKERS,
             remove_columns=train_dataset.column_names
         )
+    ###########################################################################
+    #My prints
+    print(" \n ------------- ")
+    [print(ex) for ex in train_dataset] 
+
+    print(" \n ------------- ")
+    [print(ex) for ex in train_dataset_featurized] 
+    ###########################################################################
     if training_args.do_eval:
         eval_dataset = dataset[eval_split]
         if args.max_eval_samples:

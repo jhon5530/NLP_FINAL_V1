@@ -116,12 +116,12 @@ def main():
         )
     ###########################################################################
     #My prints
-    print(" \n ------------- ")
-    print(type(train_dataset))
-    [print(ex) for ex in train_dataset] 
+    #print(" \n ------------- ")
+    #print(type(train_dataset))
+    #[print(ex) for ex in train_dataset] 
 
-    print(" \n ------------- ")
-    [print(ex) for ex in train_dataset_featurized] 
+    #print(" \n ------------- ")
+    #[print(ex) for ex in train_dataset_featurized] 
     ###########################################################################
     if training_args.do_eval:
         eval_dataset = dataset[eval_split]
@@ -133,6 +133,17 @@ def main():
             num_proc=NUM_PREPROCESSING_WORKERS,
             remove_columns=eval_dataset.column_names
         )
+    ###########################################################################
+    #My prints
+    print(" \n ------------- ")
+    print(type(eval_dataset))
+    [print(ex) for ex in eval_dataset] 
+
+    print(" \n ------------- ")
+    [print(ex) for ex in eval_dataset_featurized] 
+    ###########################################################################
+
+    
 
     # Select the training configuration
     trainer_class = Trainer

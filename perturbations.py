@@ -5,7 +5,7 @@ from checklist.test_suite import TestSuite
 import datasets
 from datasets import Dataset
 import spacy
-nlp = spacy.load('en_core_web_sm')
+
 #suite = TestSuite()
 
 
@@ -71,18 +71,19 @@ def changing_contractions(dataset):
 
 
 def negating_hyp(dataset):
-
+    nlp = spacy.load('en_core_web_sm')
     premises, hyp, label = [],[],[]
     i = 0
+    per = Perturb()
     for data in dataset:
         i += 1
         d = nlp(data["premise"])
-        print (d)
-        p = Perturb.add_negation(d)
+        print (i, d)
+        p = per.remove_negation(d)
         if p != None:
             print("perturbating")
             premises.append(p)
-            hyp.append(data["hypothesis"])
+            hyp.append("hypothesis")
             label.append(data["label"])
         else:
             premises.append(data["premise"])

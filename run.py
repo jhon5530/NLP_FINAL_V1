@@ -5,6 +5,14 @@ from helpers import prepare_dataset_nli, prepare_train_dataset_qa, \
     prepare_validation_dataset_qa, QuestionAnsweringTrainer, compute_accuracy
 import os
 import json
+from perturbations import adding_typos, changing_contractions, negating_hyp
+
+# My imports
+import checklist
+from checklist.perturb import Perturb
+from checklist.test_types import MFT, INV, DIR
+from checklist.test_suite import TestSuite
+suite = TestSuite()
 
 NUM_PREPROCESSING_WORKERS = 2
 
@@ -116,17 +124,20 @@ def main():
         )
     ###########################################################################
     #My prints
-    #print(" \n ------------- ")
-    #print(type(train_dataset))
-    #[print(ex) for ex in train_dataset] 
+    if training_args.do_train:
+        print(" \n ------------- ")
+        print(type(train_dataset))
+        [print(ex) for ex in train_dataset] 
 
-    #print(" \n ------------- ")
-    #[print(ex) for ex in train_dataset_featurized] 
+        print(" \n ------------- ")
+        #[print(ex) for ex in train_dataset_featurized] 
     ###########################################################################
+    
     if training_args.do_eval:
         eval_dataset = dataset[eval_split]
         if args.max_eval_samples:
             eval_dataset = eval_dataset.select(range(args.max_eval_samples))
+
         eval_dataset_featurized = eval_dataset.map(
             prepare_eval_dataset,
             batched=True,
@@ -135,16 +146,24 @@ def main():
         )
     ###########################################################################
     #My prints
-    print(" \n ------------- ")
-    print(type(eval_dataset))
-    [print(ex) for ex in eval_dataset] 
+    if training_args.do_eval:
+        print(" \n ------------- ")
+        print(type(eval_dataset))
+        [print(ex) for ex in eval_dataset] 
 
-    print(" \n ------------- ")
-    [print(ex) for ex in eval_dataset_featurized] 
+        #[print(ex) for ex in eval_dataset_featurized] 
     ###########################################################################
+        
+        if True:
+            #eval_dataset = adding_typos(eval_dataset)
+            #eval_dataset = changing_contractions(eval_dataset)
+            eval_dataset = negating_hyp(eval_dataset)
+            
+            #print(" \n Evaluating on perturbed Dataset ")
+            #print(type(eval_dataset))
+            #[print(ex) for ex in eval_dataset]
 
-    
-
+    ###########################################################################
     # Select the training configuration
     trainer_class = Trainer
     eval_kwargs = {}
@@ -180,6 +199,7 @@ def main():
         tokenizer=tokenizer,
         compute_metrics=compute_metrics_and_store_predictions
     )
+    
     # Train and/or evaluate
     if training_args.do_train:
         trainer.train()

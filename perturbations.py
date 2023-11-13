@@ -5,6 +5,7 @@ from checklist.test_suite import TestSuite
 import datasets
 from datasets import Dataset
 import spacy
+import random
 
 #suite = TestSuite()
 
@@ -75,11 +76,18 @@ def negating_hyp(dataset):
     premises, hyp, label = [],[],[]
     i = 0
     per = Perturb()
+    new_list = []
+    it = iter(dataset["premise"]) 
     for data in dataset:
-        i += 1
-        d = nlp(data["premise"])
+        d = nlp(next(it))
         print (i, d)
-        p = per.add_negation(d)
+        i += 1
+        try:
+            p = per.add_negation(d)
+        except:
+            print("Exception")
+            pass
+        print ("Perturb", p)
         if p != None:
             print("perturbating")
             premises.append(p)
@@ -93,6 +101,56 @@ def negating_hyp(dataset):
     output = {"premise": premises,
             "hypothesis": hyp, 
             "label": label}
+    return Dataset.from_dict(output)
+
+def removing_negating_hyp(dataset):
+    nlp = spacy.load('en_core_web_sm')
+    premises, hyp, label = [],[],[]
+    i = 0
+    per = Perturb()
+    for data in dataset:
+        i += 1
+        d = nlp(data["premise"])
+        print (i, d)
+        p = per.remove_negation(d)
+        if p != None:
+            print("perturbating")
+            premises.append(p)
+            hyp.append("hypothesis")
+            label.append(data["label"])
+        else:
+            premises.append(data["premise"])
+            hyp.append(data["hypothesis"])
+            label.append(data["label"])
+
+    output = {"premise": premises,
+            "hypothesis": hyp, 
+            "label": label}
+    return Dataset.from_dict(output)
+
+
+def changing_names_entities(dataset):
+    nlp = spacy.load('en_core_web_sm')
+    r = random.randint(0,100)
+    premises, hyp, label = [],[],[]
+    per = Perturb()
+    for data in dataset:
+        d_p = nlp(data["premise"])
+        d_h = nlp(data["hypothesis"])
+        p_p = per.change_names(d_p, seed=r, n=1)
+        p_h = per.change_names(d_h, seed=r, n=1)
+
+        if (p_p != None) and p_h != None:
+            print("perturbating", p_p, p_h)
+            premises.append(p_p[0])
+            hyp.append(p_h[0])
+            label.append(data["label"])
+        else:
+            premises.append(data["premise"])
+            hyp.append(data["hypothesis"])
+            label.append(data["label"])
+
+    output = {"premise": premises, "hypothesis": hyp, "label": label}
     return Dataset.from_dict(output)
     
 

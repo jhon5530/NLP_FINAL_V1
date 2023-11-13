@@ -5,7 +5,7 @@ from helpers import prepare_dataset_nli, prepare_train_dataset_qa, \
     prepare_validation_dataset_qa, QuestionAnsweringTrainer, compute_accuracy
 import os
 import json
-from perturbations import adding_typos, changing_contractions, negating_hyp
+from perturbations import adding_typos, changing_contractions, negating_hyp, changing_names_entities
 
 # My imports
 import checklist

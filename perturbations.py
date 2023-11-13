@@ -79,7 +79,7 @@ def negating_hyp(dataset):
         i += 1
         d = nlp(data["premise"])
         print (i, d)
-        p = per.remove_negation(d)
+        p = per.add_negation(d)
         if p != None:
             print("perturbating")
             premises.append(p)

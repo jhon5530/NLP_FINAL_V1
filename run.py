@@ -6,7 +6,7 @@ from helpers import prepare_dataset_nli, prepare_train_dataset_qa, \
 import os
 import json
 from perturbations import adding_typos, changing_contractions, expanding_contractions
-from perturbations import  negating_hyp, changing_names_entities, changing_first_noun
+from perturbations import  negating_hyp, changing_names_entities, changing_first_noun, addany2
 
 # My imports
 import checklist
@@ -146,7 +146,8 @@ def main():
         #eval_dataset = changing_contractions(eval_dataset)
         #eval_dataset = expanding_contractions(eval_dataset)
         #eval_dataset = changing_names_entities(eval_dataset)
-        eval_dataset = changing_first_noun(eval_dataset)
+        #eval_dataset = changing_first_noun(eval_dataset)
+        eval_dataset = addany2(eval_dataset)
 
         ##############################
         eval_dataset_featurized = eval_dataset.map(

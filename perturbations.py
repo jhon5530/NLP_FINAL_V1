@@ -2,17 +2,19 @@ import checklist
 from checklist.perturb import Perturb
 from checklist.test_types import MFT, INV, DIR
 from checklist.test_suite import TestSuite
+from checklist.editor import Editor
 import datasets
 from datasets import Dataset
 import spacy
 import random
+import nltk
 
 #suite = TestSuite()
 
 
 
 def adding_typos(dataset):
-    nTypos = 100
+    nTypos = 0
     sentences = dataset["hypothesis"]
     t = Perturb.perturb(sentences, Perturb.add_typos, nsamples=0, typos=nTypos, keep_original = False)
     new_dataset = [p[0] for p in t.data]
@@ -35,22 +37,20 @@ def processing(premises):
     new_dataset_premises = []
     new_sentence = ""
     for sentence in premises:
-        ex=Perturb.expand_contractions(sentence)
-        if sentence != ex:
-            new_sentence = ex
             
         c = Perturb.contract(sentence)
         if sentence != c:
+            print("Perturbating from: ", sentence, " --to-- ", c)
             new_sentence = c
                
         if new_sentence == "":
+            
             new_sentence = sentence
             
         new_dataset_premises.append(new_sentence)
         new_sentence = ""
         
     return new_dataset_premises
-
 
 def changing_contractions(dataset):
     
@@ -71,7 +71,42 @@ def changing_contractions(dataset):
     return dataset.map(augment_data, new_dataset_hyp)
 
 
-def negating_hyp(dataset):
+def processing_expanding(premises):
+    new_dataset_premises = []
+    new_sentence = ""
+    for sentence in premises:
+        ex=Perturb.expand_contractions(sentence)
+        if sentence != ex:
+            print("Perturbating from: ", sentence, " --to-- ", ex)
+            new_sentence = ex
+                   
+        if new_sentence == "":
+            new_sentence = sentence
+            
+        new_dataset_premises.append(new_sentence)
+        new_sentence = ""
+        
+    return new_dataset_premises
+
+def expanding_contractions(dataset):
+    
+    premises = list(dataset["premise"])
+    new_dataset_premises = processing_expanding(premises)
+
+    hypothesis = dataset["hypothesis"]
+    new_dataset_hyp = processing_expanding(hypothesis)
+
+    def augment_data(data, index):
+        if index < len(new_dataset_hyp):
+            return {"premise": new_dataset_premises[index],
+                    "hypothesis": new_dataset_hyp[index]}
+        else: 
+            return {"premise": data["premise"],
+                    "hypothesis": data["hypothesis"]}
+        
+    return dataset.map(augment_data, new_dataset_hyp)
+
+def negating_premises(dataset):
     nlp = spacy.load('en_core_web_sm')
     premises, hyp, label = [],[],[]
     i = 0
@@ -80,18 +115,49 @@ def negating_hyp(dataset):
     it = iter(dataset["premise"]) 
     for data in dataset:
         d = nlp(next(it))
-        print (i, d)
         i += 1
         try:
             p = per.add_negation(d)
         except:
             print("Exception")
-            pass
-        print ("Perturb", p)
+            p = per.add_negation(d)
+        ###print ("Perturb", p)
         if p != None:
-            print("perturbating")
+            print(i, "Perturbating from: ", d, " ---to--- ", p)
+            print(data["hypothesis"], data["label"])
             premises.append(p)
-            hyp.append("hypothesis")
+            hyp.append(data["hypothesis"])
+            label.append(data["label"])
+        else:
+            premises.append(data["premise"])
+            hyp.append(data["hypothesis"])
+            label.append(data["label"])
+
+    output = {"premise": premises,
+            "hypothesis": hyp, 
+            "label": label}
+    return Dataset.from_dict(output)
+
+def negating_hyp(dataset):
+    nlp = spacy.load('en_core_web_sm')
+    premises, hyp, label = [],[],[]
+    i = 0
+    per = Perturb()
+    new_list = []
+    it = iter(dataset["hypothesis"]) 
+    for data in dataset:
+        d = nlp(next(it))
+        i += 1
+        try:
+            p = per.add_negation(d)
+        except:
+            print("Exception")
+            p = per.add_negation(d)
+        if p != None:
+            print(data["premise"], data["label"])
+            print(i, "Perturbating hyp from: ", d, " ---to--- ", p)
+            premises.append(data["premise"])
+            hyp.append(p)
             label.append(data["label"])
         else:
             premises.append(data["premise"])
@@ -152,6 +218,60 @@ def changing_names_entities(dataset):
 
     output = {"premise": premises, "hypothesis": hyp, "label": label}
     return Dataset.from_dict(output)
+
+
+def find_first_noun(text: str, nlp):
+    spacy_text = nlp(text)
+    nouns = [word.text for word in spacy_text if word.tag_ == "NN"]
+    if len(nouns) >= 1:
+        return nouns[0]
+    return nouns
+    
+
+def changing_first_noun(dataset):
+    nlp = spacy.load('en_core_web_sm')
+    
+    editor = Editor()
+    nltk.download("brown")
+    nltk.download("punkt")
+    premises, hyp, hyper, label = [],[],[],[]
+    per = Perturb()
+    index = dataset["premise"]
+    i = 0
+    
+    for data in dataset:
+        data_hyp = data["hypothesis"]
+        num_words = 1
+        noun = find_first_noun(data_hyp, nlp)
+        if noun:
+            ###print(data_hyp, "Rel: ", noun)
+            try: 
+                related_nouns = editor.related_words(data_hyp, noun)[:num_words]
+            except:
+                related_nouns = []
+
+            if related_nouns: 
+                premises.append(data["premise"])
+                ###print(data_hyp, "Rel: ", noun, "others: ",  related_nouns)
+                hyp.append(data_hyp.replace(noun, related_nouns[0]))
+                if data["label"] == 0:
+                    label.append(2)
+                elif data["label"] == 1:
+                    label.append(2)
+                else: 
+                    label.append(data["label"])
+                continue
+        ###print("Jumping")
+        premises.append(data["premise"])
+        hyp.append(data_hyp)
+        label.append(data["label"])
+
+    output = {"premise": premises,
+            "hypothesis": hyp, 
+            "label": label}
+    
+    return Dataset.from_dict(output)
+       
     
 
 

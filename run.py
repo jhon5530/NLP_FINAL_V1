@@ -5,7 +5,8 @@ from helpers import prepare_dataset_nli, prepare_train_dataset_qa, \
     prepare_validation_dataset_qa, QuestionAnsweringTrainer, compute_accuracy
 import os
 import json
-from perturbations import adding_typos, changing_contractions, negating_hyp, changing_names_entities
+from perturbations import adding_typos, changing_contractions, expanding_contractions
+from perturbations import  negating_hyp, changing_names_entities, changing_first_noun
 
 # My imports
 import checklist
@@ -137,7 +138,17 @@ def main():
         eval_dataset = dataset[eval_split]
         if args.max_eval_samples:
             eval_dataset = eval_dataset.select(range(args.max_eval_samples))
+        ##############################    
+        print(" \n Original Dataset ")
+        [print(ex) for ex in eval_dataset]
+        #eval_dataset = negating_hyp(eval_dataset)
+        #eval_dataset = adding_typos(eval_dataset)
+        #eval_dataset = changing_contractions(eval_dataset)
+        #eval_dataset = expanding_contractions(eval_dataset)
+        #eval_dataset = changing_names_entities(eval_dataset)
+        eval_dataset = changing_first_noun(eval_dataset)
 
+        ##############################
         eval_dataset_featurized = eval_dataset.map(
             prepare_eval_dataset,
             batched=True,
@@ -147,21 +158,18 @@ def main():
     ###########################################################################
     #My prints
     if training_args.do_eval:
-        print(" \n ------------- ")
-        print(type(eval_dataset))
-        [print(ex) for ex in eval_dataset] 
-
+        #print(" \n ------------- ")
+        #print(type(eval_dataset))
+        #[print(ex) for ex in eval_dataset] 
         #[print(ex) for ex in eval_dataset_featurized] 
     ###########################################################################
-        
         if True:
             #eval_dataset = adding_typos(eval_dataset)
             #eval_dataset = changing_contractions(eval_dataset)
-            eval_dataset = negating_hyp(eval_dataset)
+            #eval_dataset = negating_hyp(eval_dataset)
             
-            #print(" \n Evaluating on perturbed Dataset ")
-            #print(type(eval_dataset))
-            #[print(ex) for ex in eval_dataset]
+            print(" \n Evaluating on perturbed Dataset ")
+            [print(ex) for ex in eval_dataset]
 
     ###########################################################################
     # Select the training configuration
@@ -223,6 +231,7 @@ def main():
 
         print('Evaluation results:')
         print(results)
+        print("End")
 
         os.makedirs(training_args.output_dir, exist_ok=True)
 

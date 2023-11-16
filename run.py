@@ -137,9 +137,8 @@ def main():
             remove_columns=train_dataset.column_names
         )
 
-    ###########################################################################
-    #My prints
-    if training_args.do_train:
+        ###########################################################################
+        #My prints
         print(" \n ------------- ")
         print(type(train_dataset))
         [print(ex) for ex in train_dataset] 

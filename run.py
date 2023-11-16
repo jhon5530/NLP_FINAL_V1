@@ -6,7 +6,8 @@ from helpers import prepare_dataset_nli, prepare_train_dataset_qa, \
 import os
 import json
 from perturbations import adding_typos, changing_contractions, expanding_contractions
-from perturbations import  negating_hyp, changing_names_entities, changing_first_noun, addany2
+from perturbations import  negating_hyp, changing_names_entities, changing_first_noun
+from perturbations import addany2_end, addany2_begin
 
 # My imports
 import checklist
@@ -14,6 +15,8 @@ from checklist.perturb import Perturb
 from checklist.test_types import MFT, INV, DIR
 from checklist.test_suite import TestSuite
 suite = TestSuite()
+from datasets import concatenate_datasets, load_dataset
+from datasets import load_dataset, ClassLabel, Value
 
 NUM_PREPROCESSING_WORKERS = 2
 
@@ -117,6 +120,17 @@ def main():
         train_dataset = dataset['train']
         if args.max_train_samples:
             train_dataset = train_dataset.select(range(args.max_train_samples))
+            
+    #########################################################################
+    # Adversary Attack for training
+            perturbed_dataset = addany2_begin(train_dataset)
+            eva = train_dataset.features.type == perturbed_dataset.features.type
+            print ("Concatenation test: ", eva)
+            label = ClassLabel(num_classes=3, names=['entailment', 'neutral', 'contradiction'], id=None)
+            perturbed_dataset = perturbed_dataset.cast_column("label", label)
+            train_dataset = concatenate_datasets([train_dataset, perturbed_dataset])
+            train_dataset = train_dataset.shuffle(seed=42)
+
         train_dataset_featurized = train_dataset.map(
             prepare_train_dataset,
             batched=True,
@@ -147,7 +161,7 @@ def main():
         #eval_dataset = expanding_contractions(eval_dataset)
         #eval_dataset = changing_names_entities(eval_dataset)
         #eval_dataset = changing_first_noun(eval_dataset)
-        eval_dataset = addany2(eval_dataset)
+        eval_dataset = addany2_end(eval_dataset)
 
         ##############################
         eval_dataset_featurized = eval_dataset.map(

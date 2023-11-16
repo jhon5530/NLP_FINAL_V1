@@ -275,7 +275,8 @@ def changing_first_noun(dataset):
     return Dataset.from_dict(output)
 
 
-def addany2(dataset):
+def addany2_end(dataset):
+    nltk.download('punkt')
     synonyms = [] 
     antonyms = []
     premises, hyp, label = [],[],[] 
@@ -286,8 +287,8 @@ def addany2(dataset):
         tokens = word_tokenize(data["hypothesis"])
 
         parts_of_speech = nltk.pos_tag(tokens)
-        print("-----", "\n")
-        print(parts_of_speech)
+        ###print("-----", "\n")
+        ###print(parts_of_speech)
         nouns = list(filter(lambda x: x[1] == "NN", parts_of_speech))
         nouns_list = [n[0] for n in nouns]
         dt = list(filter(lambda x: x[1] == "DT", parts_of_speech))
@@ -295,9 +296,9 @@ def addany2(dataset):
         vbg = list(filter(lambda x: x[1] == "VBG", parts_of_speech))
         vbg = [n[0] for n in vbg]
 
-        print("nouns_list: ", nouns_list)
-        print("dt: ", dt)
-        print("vbg: ", vbg)
+        ###print("nouns_list: ", nouns_list)
+        ###print("dt: ", dt)
+        ###print("vbg: ", vbg)
 
         for noun in nouns_list:
             for syn in wordnet.synsets(noun): 
@@ -314,8 +315,8 @@ def addany2(dataset):
                     if l.antonyms(): 
                         antonyms.append(l.antonyms()[0].name())
         vbg_ant = list(set(antonyms))
-        print("nouns_ant: ", nouns_ant)
-        print("vbg_ant: ", vbg_ant)
+        ###print("nouns_ant: ", nouns_ant)
+        ###print("vbg_ant: ", vbg_ant)
 
         new_aa = dt + nouns_ant + vbg_ant
         random.shuffle(new_aa)
@@ -326,8 +327,73 @@ def addany2(dataset):
             label.append(data["label"])
         else:
             premises.append(data["premise"])
-            print("AA: ", new_aa[:5])
+            ###print("AA: ", new_aa[:5])
             hyp.append(data["hypothesis"]+ " "+ ' '.join(new_aa[:5]))
+            label.append(data["label"])
+            
+
+    output = {"premise": premises,
+            "hypothesis": hyp, 
+            "label": label}
+    
+    return Dataset.from_dict(output)
+
+
+def addany2_begin(dataset):
+    nltk.download('punkt')
+    synonyms = [] 
+    antonyms = []
+    premises, hyp, label = [],[],[] 
+    nltk.download('averaged_perceptron_tagger')
+    editor = Editor()
+
+    for data in dataset:
+        tokens = word_tokenize(data["hypothesis"])
+
+        parts_of_speech = nltk.pos_tag(tokens)
+        ###print("-----", "\n")
+        ###print(parts_of_speech)
+        nouns = list(filter(lambda x: x[1] == "NN", parts_of_speech))
+        nouns_list = [n[0] for n in nouns]
+        dt = list(filter(lambda x: x[1] == "DT", parts_of_speech))
+        dt = [n[0] for n in dt]
+        vbg = list(filter(lambda x: x[1] == "VBG", parts_of_speech))
+        vbg = [n[0] for n in vbg]
+
+        ###print("nouns_list: ", nouns_list)
+        ###print("dt: ", dt)
+        ###print("vbg: ", vbg)
+
+        for noun in nouns_list:
+            for syn in wordnet.synsets(noun): 
+                for l in syn.lemmas(): 
+                    synonyms.append(l.name())
+                    if l.antonyms(): 
+                        antonyms.append(l.antonyms()[0].name())
+        nouns_ant = list(set(antonyms))
+
+        for v in vbg:
+            for syn in wordnet.synsets(v): 
+                for l in syn.lemmas(): 
+                    synonyms.append(l.name())
+                    if l.antonyms(): 
+                        antonyms.append(l.antonyms()[0].name())
+        vbg_ant = list(set(antonyms))
+        ###print("nouns_ant: ", nouns_ant)
+        ###print("vbg_ant: ", vbg_ant)
+
+        new_aa = dt + nouns_ant + vbg_ant
+        random.shuffle(new_aa)
+        
+        if new_aa == []:
+            premises.append(data["premise"])
+            hyp.append(data["hypothesis"])
+            label.append(data["label"])
+        else:
+            premises.append(data["premise"])
+            ###print("AA: ", new_aa[:5])
+            #hyp.append(data["hypothesis"]+ " "+ ' '.join(new_aa[:5]))
+            hyp.append(' '.join(new_aa[:5]) + " " + data["hypothesis"])
             label.append(data["label"])
             
 

@@ -121,11 +121,10 @@ def main():
         if args.max_train_samples:
             train_dataset = train_dataset.select(range(args.max_train_samples))
             
-    #########################################################################
-    # Adversary Attack for training
+            #########################################################################
+            # Adversary Attack for training
             perturbed_dataset = addany2_begin(train_dataset)
             eva = train_dataset.features.type == perturbed_dataset.features.type
-            print ("Concatenation test: ", eva)
             label = ClassLabel(num_classes=3, names=['entailment', 'neutral', 'contradiction'], id=None)
             perturbed_dataset = perturbed_dataset.cast_column("label", label)
             train_dataset = concatenate_datasets([train_dataset, perturbed_dataset])
@@ -137,6 +136,7 @@ def main():
             num_proc=NUM_PREPROCESSING_WORKERS,
             remove_columns=train_dataset.column_names
         )
+
     ###########################################################################
     #My prints
     if training_args.do_train:
@@ -144,15 +144,14 @@ def main():
         print(type(train_dataset))
         [print(ex) for ex in train_dataset] 
 
-        print(" \n ------------- ")
-        #[print(ex) for ex in train_dataset_featurized] 
-    ###########################################################################
-    
+     
     if training_args.do_eval:
         eval_dataset = dataset[eval_split]
         if args.max_eval_samples:
             eval_dataset = eval_dataset.select(range(args.max_eval_samples))
-        ##############################    
+        
+        ###########################################################################
+        # Addying perturbations 
         print(" \n Original Dataset ")
         [print(ex) for ex in eval_dataset]
         #eval_dataset = negating_hyp(eval_dataset)
@@ -161,32 +160,20 @@ def main():
         #eval_dataset = expanding_contractions(eval_dataset)
         #eval_dataset = changing_names_entities(eval_dataset)
         #eval_dataset = changing_first_noun(eval_dataset)
-        eval_dataset = addany2_end(eval_dataset)
+        #eval_dataset = addany2_end(eval_dataset)
 
-        ##############################
         eval_dataset_featurized = eval_dataset.map(
             prepare_eval_dataset,
             batched=True,
             num_proc=NUM_PREPROCESSING_WORKERS,
             remove_columns=eval_dataset.column_names
         )
-    ###########################################################################
-    #My prints
-    if training_args.do_eval:
-        #print(" \n ------------- ")
-        #print(type(eval_dataset))
-        #[print(ex) for ex in eval_dataset] 
-        #[print(ex) for ex in eval_dataset_featurized] 
-    ###########################################################################
-        if True:
-            #eval_dataset = adding_typos(eval_dataset)
-            #eval_dataset = changing_contractions(eval_dataset)
-            #eval_dataset = negating_hyp(eval_dataset)
-            
-            print(" \n Evaluating on perturbed Dataset ")
-            [print(ex) for ex in eval_dataset]
+    
+        ###########################################################################
+        #My prints      
+        print(" \n Evaluating on perturbed Dataset ")
+        [print(ex) for ex in eval_dataset]
 
-    ###########################################################################
     # Select the training configuration
     trainer_class = Trainer
     eval_kwargs = {}

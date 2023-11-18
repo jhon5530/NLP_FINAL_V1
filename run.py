@@ -7,7 +7,7 @@ import os
 import json
 from perturbations import adding_typos, changing_contractions, expanding_contractions
 from perturbations import  negating_hyp, changing_names_entities, changing_first_noun
-from perturbations import addany2_end, addany2_begin
+from perturbations import addany2_end, addany2_begin, addany2_eb_ph, jaccard_sentence
 
 # My imports
 import checklist
@@ -51,7 +51,7 @@ def main():
         By default, "nli" will use the SNLI dataset, and "qa" will use the SQuAD dataset.""")
     argp.add_argument('--dataset', type=str, default=None,
                       help="""This argument overrides the default dataset used for the specified task.""")
-    argp.add_argument('--max_length', type=int, default=128,
+    argp.add_argument('--max_length', type=int, default=256,
                       help="""This argument limits the maximum sequence length used during training/evaluation.
         Shorter sequence lengths need less memory and computation time, but some examples may end up getting truncated.""")
     argp.add_argument('--max_train_samples', type=int, default=None,
@@ -121,17 +121,36 @@ def main():
         if args.max_train_samples:
             train_dataset = train_dataset.select(range(args.max_train_samples))
             
-            aa = False
+
+            #########################################################################
+            # Residual debiasing
+            RD = True
+            if RD == True:
+                print("\n Residual debiasing on training")
+                label = ClassLabel(num_classes=3, names=['entailment', 'neutral', 'contradiction'], id=None)
+                perturbed_dataset = jaccard_sentence(train_dataset)
+                perturbed_dataset = perturbed_dataset.cast_column("label", label)
+
+                train_dataset = train_dataset.select(range(15000))
+                train_dataset = concatenate_datasets([train_dataset, perturbed_dataset])
+                train_dataset = train_dataset.shuffle(seed=42)
             #########################################################################
             # Adversary Attack for training
-
-            if aa == True:
-                perturbed_dataset = addany2_begin(train_dataset)
+            AA = False
+            if AA == True:
+                print("\n Perturbing on training")
+                #perturbed_dataset = addany2_end(train_dataset)
+                perturbed_dataset = jaccard_sentence(train_dataset)
+                #perturbed_dataset = addany2_eb_ph(train_dataset)
+                
+                #perturbed_dataset = adding_typos(train_dataset)
                 eva = train_dataset.features.type == perturbed_dataset.features.type
                 label = ClassLabel(num_classes=3, names=['entailment', 'neutral', 'contradiction'], id=None)
                 perturbed_dataset = perturbed_dataset.cast_column("label", label)
                 train_dataset = concatenate_datasets([train_dataset, perturbed_dataset])
                 train_dataset = train_dataset.shuffle(seed=42)
+                #print(" \n ------------- ")
+                #[print(ex) for ex in train_dataset]
 
         train_dataset_featurized = train_dataset.map(
             prepare_train_dataset,
@@ -154,8 +173,8 @@ def main():
         
         ###########################################################################
         # Addying perturbations 
-        print(" \n Original Dataset ")
-        [print(ex) for ex in eval_dataset]
+        print(" \n Evaluation with perturbations ")
+        #[print(ex) for ex in eval_dataset]
         #eval_dataset = negating_hyp(eval_dataset)
         #eval_dataset = adding_typos(eval_dataset)
         #eval_dataset = changing_contractions(eval_dataset)
@@ -163,6 +182,10 @@ def main():
         #eval_dataset = changing_names_entities(eval_dataset)
         #eval_dataset = changing_first_noun(eval_dataset)
         #eval_dataset = addany2_end(eval_dataset)
+        #eval_dataset = addany2_begin(eval_dataset)
+        #eval_dataset = addany2_eb_ph(eval_dataset)
+        #jaccard_sentence(eval_dataset)
+        #eval_dataset = jaccard_sentence(eval_dataset)
 
         eval_dataset_featurized = eval_dataset.map(
             prepare_eval_dataset,
@@ -173,8 +196,8 @@ def main():
     
         ###########################################################################
         #My prints      
-        print(" \n Evaluating on perturbed Dataset ")
-        [print(ex) for ex in eval_dataset]
+        #print(" \n Evaluating on perturbed Dataset ")
+        #[print(ex) for ex in eval_dataset]
 
     # Select the training configuration
     trainer_class = Trainer

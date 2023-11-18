@@ -16,7 +16,7 @@ from nltk.corpus import wordnet
 
 
 def adding_typos(dataset):
-    nTypos = 0
+    nTypos = 2
     sentences = dataset["hypothesis"]
     t = Perturb.perturb(sentences, Perturb.add_typos, nsamples=0, typos=nTypos, keep_original = False)
     new_dataset = [p[0] for p in t.data]
@@ -402,6 +402,105 @@ def addany2_begin(dataset):
             "label": label}
     
     return Dataset.from_dict(output)
+
+def addany2_eb_ph(dataset):
+    nltk.download('punkt')
+    synonyms = [] 
+    antonyms = []
+    premises, hyp, label = [],[],[] 
+    nltk.download('averaged_perceptron_tagger')
+    editor = Editor()
+
+    for data in dataset:
+        tokens = word_tokenize(data["hypothesis"])
+
+        parts_of_speech = nltk.pos_tag(tokens)
+        ###print("-----", "\n")
+        ###print(parts_of_speech)
+        nouns = list(filter(lambda x: x[1] == "NN", parts_of_speech))
+        nouns_list = [n[0] for n in nouns]
+        dt = list(filter(lambda x: x[1] == "DT", parts_of_speech))
+        dt = [n[0] for n in dt]
+        vbg = list(filter(lambda x: x[1] == "VBG", parts_of_speech))
+        vbg = [n[0] for n in vbg]
+
+        ###print("nouns_list: ", nouns_list)
+        ###print("dt: ", dt)
+        ###print("vbg: ", vbg)
+
+        for noun in nouns_list:
+            for syn in wordnet.synsets(noun): 
+                for l in syn.lemmas(): 
+                    synonyms.append(l.name())
+                    if l.antonyms(): 
+                        antonyms.append(l.antonyms()[0].name())
+        nouns_ant = list(set(antonyms))
+
+        for v in vbg:
+            for syn in wordnet.synsets(v): 
+                for l in syn.lemmas(): 
+                    synonyms.append(l.name())
+                    if l.antonyms(): 
+                        antonyms.append(l.antonyms()[0].name())
+        vbg_ant = list(set(antonyms))
+        ###print("nouns_ant: ", nouns_ant)
+        ###print("vbg_ant: ", vbg_ant)
+
+        new_aa = dt + nouns_ant + vbg_ant
+        new_bb = dt + nouns_ant + vbg_ant
+        random.shuffle(new_aa)
+        random.shuffle(new_bb)
+        
+        if new_aa == []:
+            premises.append(data["premise"])
+            hyp.append(data["hypothesis"])
+            label.append(data["label"])
+        else:
+            premises.append(' '.join(new_aa[:3]) + " " + data["premise"] + " " + ' '.join(new_bb[:3]))
+            ###print("AA: ", new_aa[:5])
+            hyp.append(' '.join(new_aa[:3]) + " " + data["hypothesis"] + " " + ' '.join(new_bb[:3]))
+            label.append(data["label"])
+            
+
+    output = {"premise": premises,
+            "hypothesis": hyp, 
+            "label": label}
+    
+    return Dataset.from_dict(output)
+
+def jaccard(list1, list2):
+    intersection = len(list(set(list1).intersection(list2)))
+    union = (len(list1) + len(list2)) - intersection
+    similarity=float(intersection) / union
+    distance=1-similarity
+    return similarity,distance
+
+def jaccard_sentence(dataset):
+    
+    premises, hyp, label =  [], [], []
+    id = 0
+    number = 0
+    for data in dataset:
+        id += 1
+        d_p = data["premise"]
+        d_h = data["hypothesis"]
+        sim, dis = jaccard(d_p, d_h)
+        if sim >0.25 and (data["label"] == 2 or data["label"] == 1) :
+        #if sim <0.1 and (data["label"] == 0) :
+            number += 1
+            #print ("Premise: ", data["premise"])
+            #print ("Hypothesis: ", data["hypothesis"])
+            #print ("Idx: ", id, "# ", number, " Label: ", data["label"], " JS: ", sim)
+            premises.append(data["premise"])
+            hyp.append(data["hypothesis"])
+            label.append(data["label"])            
+
+    output = {"premise": premises,
+            "hypothesis": hyp, 
+            "label": label}
+
+    return Dataset.from_dict(output)
+        
 
 
                     

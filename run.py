@@ -121,14 +121,17 @@ def main():
         if args.max_train_samples:
             train_dataset = train_dataset.select(range(args.max_train_samples))
             
+            aa = False
             #########################################################################
             # Adversary Attack for training
-            perturbed_dataset = addany2_begin(train_dataset)
-            eva = train_dataset.features.type == perturbed_dataset.features.type
-            label = ClassLabel(num_classes=3, names=['entailment', 'neutral', 'contradiction'], id=None)
-            perturbed_dataset = perturbed_dataset.cast_column("label", label)
-            train_dataset = concatenate_datasets([train_dataset, perturbed_dataset])
-            train_dataset = train_dataset.shuffle(seed=42)
+
+            if aa == True:
+                perturbed_dataset = addany2_begin(train_dataset)
+                eva = train_dataset.features.type == perturbed_dataset.features.type
+                label = ClassLabel(num_classes=3, names=['entailment', 'neutral', 'contradiction'], id=None)
+                perturbed_dataset = perturbed_dataset.cast_column("label", label)
+                train_dataset = concatenate_datasets([train_dataset, perturbed_dataset])
+                train_dataset = train_dataset.shuffle(seed=42)
 
         train_dataset_featurized = train_dataset.map(
             prepare_train_dataset,
@@ -140,8 +143,8 @@ def main():
         ###########################################################################
         #My prints
         print(" \n ------------- ")
-        print(type(train_dataset))
-        [print(ex) for ex in train_dataset] 
+        #print(type(train_dataset))
+        #[print(ex) for ex in train_dataset] 
 
      
     if training_args.do_eval:

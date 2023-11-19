@@ -7,7 +7,7 @@ import os
 import json
 from perturbations import adding_typos, changing_contractions, expanding_contractions
 from perturbations import  negating_hyp, changing_names_entities, changing_first_noun
-from perturbations import addany2_end, addany2_begin, addany2_eb_ph, jaccard_sentence
+from perturbations import addany2_end, addany2_begin, addany2_eb_ph, jaccard_sentence, addanyRandom__eb_ph
 
 # My imports
 import checklist
@@ -84,6 +84,7 @@ def main():
         eval_split = 'validation_matched' if dataset_id == ('glue', 'mnli') else 'validation'
         # Load the raw data
         dataset = datasets.load_dataset(*dataset_id)
+        
     
     # NLI models need to have the output label count specified (label 0 is "entailed", 1 is "neutral", and 2 is "contradiction")
     task_kwargs = {'num_labels': 3} if args.task == 'nli' else {}
@@ -103,6 +104,8 @@ def main():
     elif args.task == 'nli':
         prepare_train_dataset = prepare_eval_dataset = \
             lambda exs: prepare_dataset_nli(exs, tokenizer, args.max_length)
+
+        
         # prepare_eval_dataset = prepare_dataset_nli
     else:
         raise ValueError('Unrecognized task name: {}'.format(args.task))
@@ -116,16 +119,28 @@ def main():
     eval_dataset = None
     train_dataset_featurized = None
     eval_dataset_featurized = None
+
+
     if training_args.do_train:
         train_dataset = dataset['train']
+        #########################################################################
+        # Changing Dataset to Train
+        if False:
+            # print(" \n Training on Glue_adv ")
+            # dataset = datasets.load_dataset('adv_glue', 'adv_mnli')
+            # train_dataset = dataset['validation']
+
+            print(" \n Training on ANLI ")
+            dataset = datasets.load_dataset('anli')
+            train_dataset = dataset['train_r3']
+          
         if args.max_train_samples:
             train_dataset = train_dataset.select(range(args.max_train_samples))
             
 
             #########################################################################
             # Residual debiasing
-            RD = True
-            if RD == True:
+            if False:
                 print("\n Residual debiasing on training")
                 label = ClassLabel(num_classes=3, names=['entailment', 'neutral', 'contradiction'], id=None)
                 perturbed_dataset = jaccard_sentence(train_dataset)
@@ -136,12 +151,11 @@ def main():
                 train_dataset = train_dataset.shuffle(seed=42)
             #########################################################################
             # Adversary Attack for training
-            AA = False
-            if AA == True:
+            if False:
                 print("\n Perturbing on training")
                 #perturbed_dataset = addany2_end(train_dataset)
-                perturbed_dataset = jaccard_sentence(train_dataset)
-                #perturbed_dataset = addany2_eb_ph(train_dataset)
+                #perturbed_dataset = jaccard_sentence(train_dataset)
+                #perturbed_dataset = addanyRandom__eb_ph(train_dataset)
                 
                 #perturbed_dataset = adding_typos(train_dataset)
                 eva = train_dataset.features.type == perturbed_dataset.features.type
@@ -168,6 +182,15 @@ def main():
      
     if training_args.do_eval:
         eval_dataset = dataset[eval_split]
+        
+        # Testing on adversarial Dataset Glue
+        ##########################################################################
+        if False:
+            dataset = datasets.load_dataset('adv_glue', 'adv_mnli')
+            eval_dataset = dataset['validation']
+            print(" \n Evaluation on Glue_adv ")
+            
+        
         if args.max_eval_samples:
             eval_dataset = eval_dataset.select(range(args.max_eval_samples))
         
@@ -196,8 +219,8 @@ def main():
     
         ###########################################################################
         #My prints      
-        #print(" \n Evaluating on perturbed Dataset ")
-        #[print(ex) for ex in eval_dataset]
+        print(" \n Evaluating on perturbed Dataset ")
+        [print(ex) for ex in eval_dataset]
 
     # Select the training configuration
     trainer_class = Trainer

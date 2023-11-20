@@ -7,7 +7,7 @@ import os
 import json
 from perturbations import adding_typos, changing_contractions, expanding_contractions
 from perturbations import  negating_hyp, changing_names_entities, changing_first_noun
-from perturbations import addany2_end, addany2_begin, addany2_eb_ph, jaccard_sentence, addanyRandom__eb_ph
+from perturbations import addany2_end, addany2_begin, addany2_eb_ph, WOB, addanyRandom__eb_ph
 
 # My imports
 import checklist
@@ -104,8 +104,6 @@ def main():
     elif args.task == 'nli':
         prepare_train_dataset = prepare_eval_dataset = \
             lambda exs: prepare_dataset_nli(exs, tokenizer, args.max_length)
-
-        
         # prepare_eval_dataset = prepare_dataset_nli
     else:
         raise ValueError('Unrecognized task name: {}'.format(args.task))
@@ -133,6 +131,19 @@ def main():
             print(" \n Training on ANLI ")
             dataset = datasets.load_dataset('anli')
             train_dataset = dataset['train_r3']
+        
+        if False:
+            print(" \n Training on ANLI and Original ")
+
+            dataset = datasets.load_dataset('anli')
+            anli_dataset = dataset['train_r3']
+            anli_dataset = anli_dataset.shuffle(seed=34)
+            anli_dataset = anli_dataset.select(range(25000))
+
+            train_dataset = train_dataset.shuffle(seed=35)
+            train_dataset = train_dataset.select(range(25000))
+            train_dataset = concatenate_datasets([train_dataset, anli_dataset])
+            train_dataset = train_dataset.shuffle(seed=42)
           
         if args.max_train_samples:
             train_dataset = train_dataset.select(range(args.max_train_samples))
@@ -154,7 +165,7 @@ def main():
             if False:
                 print("\n Perturbing on training")
                 #perturbed_dataset = addany2_end(train_dataset)
-                #perturbed_dataset = jaccard_sentence(train_dataset)
+                #perturbed_dataset = WOB(train_dataset)
                 #perturbed_dataset = addanyRandom__eb_ph(train_dataset)
                 
                 #perturbed_dataset = adding_typos(train_dataset)
@@ -207,8 +218,8 @@ def main():
         #eval_dataset = addany2_end(eval_dataset)
         #eval_dataset = addany2_begin(eval_dataset)
         #eval_dataset = addany2_eb_ph(eval_dataset)
-        #jaccard_sentence(eval_dataset)
-        #eval_dataset = jaccard_sentence(eval_dataset)
+        #WOB(eval_dataset)
+        #eval_dataset = WOB(eval_dataset)
 
         eval_dataset_featurized = eval_dataset.map(
             prepare_eval_dataset,

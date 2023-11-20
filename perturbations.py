@@ -547,7 +547,7 @@ def jaccard(list1, list2):
     distance=1-similarity
     return similarity,distance
 
-def jaccard_sentence(dataset):
+def WOB(dataset):
     
     premises, hyp, label =  [], [], []
     id = 0
@@ -558,7 +558,6 @@ def jaccard_sentence(dataset):
         d_h = data["hypothesis"]
         sim, dis = jaccard(d_p, d_h)
         if sim >0.25 and (data["label"] == 2 or data["label"] == 1) :
-        #if sim <0.1 and (data["label"] == 0) :
             number += 1
             #print ("Premise: ", data["premise"])
             #print ("Hypothesis: ", data["hypothesis"])
@@ -572,6 +571,32 @@ def jaccard_sentence(dataset):
             "label": label}
 
     return Dataset.from_dict(output)
+
+def CWB(dataset):
+    
+    premises, hyp, label =  [], [], []
+    id = 0
+    number = 0
+    for data in dataset:
+        id += 1
+        d_p = data["premise"]
+        d_h = data["hypothesis"]
+        sim, dis = jaccard(d_p, d_h)
+        if sim >0.25 and (data["label"] == 2 or data["label"] == 1) :
+            number += 1
+            #print ("Premise: ", data["premise"])
+            #print ("Hypothesis: ", data["hypothesis"])
+            #print ("Idx: ", id, "# ", number, " Label: ", data["label"], " JS: ", sim)
+            premises.append(data["premise"])
+            hyp.append(data["hypothesis"])
+            label.append(data["label"])            
+
+    output = {"premise": premises,
+            "hypothesis": hyp, 
+            "label": label}
+
+    return Dataset.from_dict(output)
+        
         
 
 

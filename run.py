@@ -144,11 +144,28 @@ def main():
             train_dataset = train_dataset.select(range(25000))
             train_dataset = concatenate_datasets([train_dataset, anli_dataset])
             train_dataset = train_dataset.shuffle(seed=42)
-          
+        #########################################################################
+        # Training on Stress Test and Original
+        if False:
+            print(" \n Training on Stress Test and Original ")
+            train_dataset = train_dataset.shuffle(seed=35)
+            train_dataset = train_dataset.select(range(1000))
+            
+            dataset = datasets.load_dataset('pietrolesci/stress_tests_nli')
+            dataset = dataset['numerical_reasoning']
+            dataset = dataset.select(range(1000))
+            dataset = dataset.rename_column("sentence1", "premise")
+            dataset = dataset.rename_column("sentence2", "hypothesis")
+            dataset = dataset.remove_columns("dtype")
+            stress_dataset = dataset.remove_columns("gold_label")
+
+            train_dataset = concatenate_datasets([train_dataset, stress_dataset])
+            train_dataset = train_dataset.shuffle(seed=42)
+ 
         if args.max_train_samples:
             train_dataset = train_dataset.select(range(args.max_train_samples))
             
-
+            
             #########################################################################
             # Residual debiasing
             if False:
@@ -200,26 +217,38 @@ def main():
             dataset = datasets.load_dataset('adv_glue', 'adv_mnli')
             eval_dataset = dataset['validation']
             print(" \n Evaluation on Glue_adv ")
+
+        if False:
+            print("\n Evaluating on Stress_test")
+            dataset = datasets.load_dataset('pietrolesci/stress_tests_nli')
+            dataset = dataset['numerical_reasoning']
+            dataset = dataset.shuffle(seed=66)
+            dataset = dataset.select(range(1000))
+            dataset = dataset.rename_column("sentence1", "premise")
+            dataset = dataset.rename_column("sentence2", "hypothesis")
+            dataset = dataset.remove_columns("dtype")
+            eval_dataset = dataset.remove_columns("gold_label")
             
         
         if args.max_eval_samples:
             eval_dataset = eval_dataset.select(range(args.max_eval_samples))
         
         ###########################################################################
-        # Addying perturbations 
-        print(" \n Evaluation with perturbations ")
-        #[print(ex) for ex in eval_dataset]
-        #eval_dataset = negating_hyp(eval_dataset)
-        #eval_dataset = adding_typos(eval_dataset)
-        #eval_dataset = changing_contractions(eval_dataset)
-        #eval_dataset = expanding_contractions(eval_dataset)
-        #eval_dataset = changing_names_entities(eval_dataset)
-        #eval_dataset = changing_first_noun(eval_dataset)
-        #eval_dataset = addany2_end(eval_dataset)
-        #eval_dataset = addany2_begin(eval_dataset)
-        #eval_dataset = addany2_eb_ph(eval_dataset)
-        #WOB(eval_dataset)
-        #eval_dataset = WOB(eval_dataset)
+        if False:
+            # Addying perturbations 
+            print(" \n Evaluation with perturbations ")
+            #[print(ex) for ex in eval_dataset]
+            #eval_dataset = negating_hyp(eval_dataset)
+            #eval_dataset = adding_typos(eval_dataset)
+            #eval_dataset = changing_contractions(eval_dataset)
+            #eval_dataset = expanding_contractions(eval_dataset)
+            #eval_dataset = changing_names_entities(eval_dataset)
+            #eval_dataset = changing_first_noun(eval_dataset)
+            #eval_dataset = addany2_end(eval_dataset)
+            #eval_dataset = addany2_begin(eval_dataset)
+            #eval_dataset = addany2_eb_ph(eval_dataset)
+            #WOB(eval_dataset)
+            #eval_dataset = WOB(eval_dataset)
 
         eval_dataset_featurized = eval_dataset.map(
             prepare_eval_dataset,
@@ -230,7 +259,7 @@ def main():
     
         ###########################################################################
         #My prints      
-        print(" \n Evaluating on perturbed Dataset ")
+        #print(" \n Evaluating on perturbed Dataset ")
         [print(ex) for ex in eval_dataset]
 
     # Select the training configuration

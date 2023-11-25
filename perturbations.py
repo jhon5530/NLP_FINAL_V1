@@ -16,7 +16,7 @@ from nltk.corpus import wordnet
 
 
 def adding_typos(dataset):
-    nTypos = 1
+    nTypos = 2
     sentences = dataset["hypothesis"]
     t = Perturb.perturb(sentences, Perturb.add_typos, nsamples=0, typos=nTypos, keep_original = False)
     new_dataset = [p[0] for p in t.data]
@@ -198,6 +198,7 @@ def removing_negating_hyp(dataset):
 
 
 def changing_names_entities(dataset):
+    print("Changing Entities")
     nlp = spacy.load('en_core_web_sm')
     r = random.randint(0,100)
     premises, hyp, label = [],[],[]
@@ -326,9 +327,9 @@ def addany2_end(dataset):
             hyp.append(data["hypothesis"])
             label.append(data["label"])
         else:
-            premises.append(data["premise"])
+            hyp.append(data["hypothesis"])
             ###print("AA: ", new_aa[:5])
-            hyp.append(data["hypothesis"]+ " "+ ' '.join(new_aa[:5]))
+            premises.append(data["premise"]+ " "+ ' '.join(new_aa[:5]))
             label.append(data["label"])
             
 
@@ -340,6 +341,7 @@ def addany2_end(dataset):
 
 
 def addany2_begin(dataset):
+    print("addany2_begin")
     nltk.download('punkt')
     synonyms = [] 
     antonyms = []
@@ -360,10 +362,6 @@ def addany2_begin(dataset):
         vbg = list(filter(lambda x: x[1] == "VBG", parts_of_speech))
         vbg = [n[0] for n in vbg]
 
-        ###print("nouns_list: ", nouns_list)
-        ###print("dt: ", dt)
-        ###print("vbg: ", vbg)
-
         for noun in nouns_list:
             for syn in wordnet.synsets(noun): 
                 for l in syn.lemmas(): 
@@ -379,8 +377,6 @@ def addany2_begin(dataset):
                     if l.antonyms(): 
                         antonyms.append(l.antonyms()[0].name())
         vbg_ant = list(set(antonyms))
-        ###print("nouns_ant: ", nouns_ant)
-        ###print("vbg_ant: ", vbg_ant)
 
         new_aa = dt + nouns_ant + vbg_ant
         random.shuffle(new_aa)
@@ -390,10 +386,8 @@ def addany2_begin(dataset):
             hyp.append(data["hypothesis"])
             label.append(data["label"])
         else:
-            premises.append(data["premise"])
-            ###print("AA: ", new_aa[:5])
-            #hyp.append(data["hypothesis"]+ " "+ ' '.join(new_aa[:5]))
-            hyp.append(' '.join(new_aa[:5]) + " " + data["hypothesis"])
+            hyp.append(data["hypothesis"])
+            premises.append(' '.join(new_aa[:5]) + " " + data["premise"])
             label.append(data["label"])
             
 
@@ -474,6 +468,7 @@ def addanyRandom__eb_ph(dataset):
     editor = Editor()
 
     for data in dataset:
+        extra_words = 5
         tokens = word_tokenize(data["hypothesis"])
 
         parts_of_speech = nltk.pos_tag(tokens)
@@ -518,22 +513,93 @@ def addanyRandom__eb_ph(dataset):
             label.append(data["label"])
         else:
             if order[1] == 1:    
-                premises.append(data["premise"] + " " + ' '.join(new_bb[:3]))
+                premises.append(data["premise"] + " " + ' '.join(new_bb[:extra_words]))
             elif order[1] == 2:
-                premises.append(' '.join(new_aa[:3]) + " " + data["premise"] + " " + ' '.join(new_bb[:3]))
+                premises.append(' '.join(new_aa[:extra_words]) + " " + data["premise"] + " " + ' '.join(new_bb[:extra_words]))
             elif order[1] == 3:
-                premises.append(' '.join(new_aa[:3]) + " " + data["premise"])
+                premises.append(' '.join(new_aa[:extra_words]) + " " + data["premise"])
             random.shuffle(order)
             if order[1] == 1:    
-                hyp.append(data["hypothesis"] + " " + ' '.join(new_bb[:3]))
+                hyp.append(data["hypothesis"] + " " + ' '.join(new_bb[:extra_words]))
             elif order[1] == 2:
-                hyp.append(' '.join(new_aa[:3]) + " " + data["hypothesis"] + " " + ' '.join(new_bb[:3]))
+                hyp.append(' '.join(new_aa[:extra_words]) + " " + data["hypothesis"] + " " + ' '.join(new_bb[:extra_words]))
             elif order[1] == 3:
-                hyp.append(' '.join(new_aa[:3]) + " " + data["hypothesis"])
+                hyp.append(' '.join(new_aa[:extra_words]) + " " + data["hypothesis"])
             
             label.append(data["label"])
             
 
+    output = {"premise": premises,
+            "hypothesis": hyp, 
+            "label": label}
+    
+    return Dataset.from_dict(output)
+
+
+def addanyRandom__eb_p(dataset):
+    nltk.download('punkt')
+    synonyms = [] 
+    antonyms = []
+    premises, hyp, label = [],[],[] 
+    nltk.download('averaged_perceptron_tagger')
+    editor = Editor()
+
+    for data in dataset:
+        extra_words = 5
+        tokens = word_tokenize(data["hypothesis"])
+
+        parts_of_speech = nltk.pos_tag(tokens)
+        ###print("-----", "\n")
+        ###print(parts_of_speech)
+        nouns = list(filter(lambda x: x[1] == "NN", parts_of_speech))
+        nouns_list = [n[0] for n in nouns]
+        dt = list(filter(lambda x: x[1] == "DT", parts_of_speech))
+        dt = [n[0] for n in dt]
+        vbg = list(filter(lambda x: x[1] == "VBG", parts_of_speech))
+        vbg = [n[0] for n in vbg]
+
+        ###print("nouns_list: ", nouns_list)
+        ###print("dt: ", dt)
+        ###print("vbg: ", vbg)
+
+        for noun in nouns_list:
+            for syn in wordnet.synsets(noun): 
+                for l in syn.lemmas(): 
+                    synonyms.append(l.name())
+                    if l.antonyms(): 
+                        antonyms.append(l.antonyms()[0].name())
+        nouns_ant = list(set(antonyms))
+
+        for v in vbg:
+            for syn in wordnet.synsets(v): 
+                for l in syn.lemmas(): 
+                    synonyms.append(l.name())
+                    if l.antonyms(): 
+                        antonyms.append(l.antonyms()[0].name())
+        vbg_ant = list(set(antonyms))
+
+        new_aa = dt + nouns_ant + vbg_ant
+        new_bb = dt + nouns_ant + vbg_ant
+        random.shuffle(new_aa)
+        random.shuffle(new_bb)
+        order = [1,2,3]
+        random.shuffle(order)
+        if new_aa == []:
+            premises.append(data["premise"])
+            hyp.append(data["hypothesis"])
+            label.append(data["label"])
+        else:
+            if order[1] == 1:    
+                premises.append(data["premise"] + " " + ' '.join(new_bb[:extra_words]))
+            elif order[1] == 2:
+                premises.append(' '.join(new_aa[:extra_words]) + " " + data["premise"] + " " + ' '.join(new_bb[:extra_words]))
+            elif order[1] == 3:
+                premises.append(' '.join(new_aa[:extra_words]) + " " + data["premise"])
+            random.shuffle(order)
+        
+            hyp.append(data["hypothesis"])
+            label.append(data["label"])
+            
     output = {"premise": premises,
             "hypothesis": hyp, 
             "label": label}

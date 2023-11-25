@@ -7,7 +7,7 @@ import os
 import json
 from perturbations import adding_typos, changing_contractions, expanding_contractions
 from perturbations import  negating_hyp, changing_names_entities, changing_first_noun
-from perturbations import addany2_end, addany2_begin, addany2_eb_ph, WOB, addanyRandom__eb_ph
+from perturbations import addany2_end, addany2_begin, addany2_eb_ph, WOB, addanyRandom__eb_ph, addanyRandom__eb_p
 
 # My imports
 import checklist
@@ -121,6 +121,7 @@ def main():
 
     if training_args.do_train:
         train_dataset = dataset['train']
+        
         #########################################################################
         # Changing Dataset to Train
         if False:
@@ -141,11 +142,23 @@ def main():
             anli_dataset = anli_dataset.select(range(25000))
 
             train_dataset = train_dataset.shuffle(seed=35)
+            train_dataset = train_dataset.select(range(50000))
+            train_dataset = concatenate_datasets([train_dataset, anli_dataset])
+            train_dataset = train_dataset.shuffle(seed=42)
+
+        if False:
+            print(" \n Training on MNLI and Original ")
+
+            dataset = datasets.load_dataset('multi_nli')
+            anli_dataset = dataset['train']
+            anli_dataset = anli_dataset.shuffle(seed=34)
+            anli_dataset = anli_dataset.select(range(25000))
+
+            train_dataset = train_dataset.shuffle(seed=35)
             train_dataset = train_dataset.select(range(25000))
             train_dataset = concatenate_datasets([train_dataset, anli_dataset])
             train_dataset = train_dataset.shuffle(seed=42)
-        #########################################################################
-        # Training on Stress Test and Original
+
         if False:
             print(" \n Training on Stress Test and Original ")
             train_dataset = train_dataset.shuffle(seed=35)
@@ -179,17 +192,19 @@ def main():
                 train_dataset = train_dataset.shuffle(seed=42)
             #########################################################################
             # Adversary Attack for training
-            if False:
+            if True:
                 print("\n Perturbing on training")
-                #perturbed_dataset = addany2_end(train_dataset)
-                #perturbed_dataset = WOB(train_dataset)
-                #perturbed_dataset = addanyRandom__eb_ph(train_dataset)
-                
-                #perturbed_dataset = adding_typos(train_dataset)
-                eva = train_dataset.features.type == perturbed_dataset.features.type
+               
+                perturbed_dataset_1 = adding_typos(train_dataset)
+                #eva = train_dataset.features.type == perturbed_dataset_1.features.type
+                perturbed_dataset_2 = addanyRandom__eb_p(train_dataset)
+                #eva = train_dataset.features.type == perturbed_dataset.features.type
+
                 label = ClassLabel(num_classes=3, names=['entailment', 'neutral', 'contradiction'], id=None)
-                perturbed_dataset = perturbed_dataset.cast_column("label", label)
-                train_dataset = concatenate_datasets([train_dataset, perturbed_dataset])
+                perturbed_dataset_1 = perturbed_dataset_1.cast_column("label", label)
+                perturbed_dataset_2 = perturbed_dataset_2.cast_column("label", label)
+
+                train_dataset = concatenate_datasets([train_dataset, perturbed_dataset_1, perturbed_dataset_2])
                 train_dataset = train_dataset.shuffle(seed=42)
                 #print(" \n ------------- ")
                 #[print(ex) for ex in train_dataset]
@@ -210,16 +225,42 @@ def main():
      
     if training_args.do_eval:
         eval_dataset = dataset[eval_split]
+
+        # eval_dataset = dataset.shuffle(seed=2)
+        # eval_dataset = eval_dataset[eval_split]
         
-        # Testing on adversarial Dataset Glue
-        ##########################################################################
         if False:
+            print(" \n Evaluation on Glue_adv ")
             dataset = datasets.load_dataset('adv_glue', 'adv_mnli')
             eval_dataset = dataset['validation']
-            print(" \n Evaluation on Glue_adv ")
+            
+        if False:
+            print("\n Evaluating on ANLI dataset")
+            dataset = datasets.load_dataset('anli')
+            eval_dataset = dataset['test_r3']
 
         if False:
-            print("\n Evaluating on Stress_test")
+            print("\n Evaluating on MNLI_matched dataset")
+            dataset = datasets.load_dataset('multi_nli')
+            eval_dataset = dataset['validation_matched']
+
+        if False:
+            print("\n Evaluating on MNLI_mismatched dataset")
+            dataset = datasets.load_dataset('multi_nli')
+            eval_dataset = dataset['validation_mismatched']
+
+        if False:
+            print("\n Evaluating on Glue Matched dataset")
+            dataset = datasets.load_dataset('glue', 'mnli_matched')
+            eval_dataset = dataset['validation']
+
+        if False:
+            print("\n Evaluating on Glue Mismatched dataset")
+            dataset = datasets.load_dataset('glue', 'mnli_mismatched')
+            eval_dataset = dataset['validation']
+
+        if True:
+            print("\n Evaluating on Challenge stress sets")
             dataset = datasets.load_dataset('pietrolesci/stress_tests_nli')
             dataset = dataset['numerical_reasoning']
             dataset = dataset.shuffle(seed=66)
@@ -246,7 +287,7 @@ def main():
             #eval_dataset = changing_first_noun(eval_dataset)
             #eval_dataset = addany2_end(eval_dataset)
             #eval_dataset = addany2_begin(eval_dataset)
-            #eval_dataset = addany2_eb_ph(eval_dataset)
+            #eval_dataset = addanyRandom__eb_p(eval_dataset)
             #WOB(eval_dataset)
             #eval_dataset = WOB(eval_dataset)
 

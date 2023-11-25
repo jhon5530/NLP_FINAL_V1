@@ -259,10 +259,10 @@ def main():
             dataset = datasets.load_dataset('glue', 'mnli_mismatched')
             eval_dataset = dataset['validation']
 
-        if False:
+        if True:
             print("\n Evaluating on Challenge stress sets")
             dataset = datasets.load_dataset('pietrolesci/stress_tests_nli')
-            dataset = dataset['numerical_reasoning']
+            dataset = dataset['word_overlap']
             dataset = dataset.shuffle(seed=66)
             dataset = dataset.select(range(1000))
             dataset = dataset.rename_column("sentence1", "premise")

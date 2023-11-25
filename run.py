@@ -259,7 +259,7 @@ def main():
             dataset = datasets.load_dataset('glue', 'mnli_mismatched')
             eval_dataset = dataset['validation']
 
-        if True:
+        if False:
             print("\n Evaluating on Challenge stress sets")
             dataset = datasets.load_dataset('pietrolesci/stress_tests_nli')
             dataset = dataset['numerical_reasoning']

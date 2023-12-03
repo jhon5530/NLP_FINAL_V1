@@ -159,14 +159,14 @@ def main():
             train_dataset = concatenate_datasets([train_dataset, anli_dataset])
             train_dataset = train_dataset.shuffle(seed=42)
 
-        if False:
+        if True:
             print(" \n Training on Stress Test and Original ")
             train_dataset = train_dataset.shuffle(seed=35)
-            train_dataset = train_dataset.select(range(9000))
+            train_dataset = train_dataset.select(range(1500))
             
             dataset = datasets.load_dataset('pietrolesci/stress_tests_nli')
-            dataset = dataset['negation']
-            dataset = dataset.select(range(9000))
+            dataset = dataset['antonym']
+            dataset = dataset.select(range(1500))
             dataset = dataset.rename_column("sentence1", "premise")
             dataset = dataset.rename_column("sentence2", "hypothesis")
             dataset = dataset.remove_columns("dtype")

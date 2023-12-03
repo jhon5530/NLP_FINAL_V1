@@ -159,13 +159,13 @@ def main():
             train_dataset = concatenate_datasets([train_dataset, anli_dataset])
             train_dataset = train_dataset.shuffle(seed=42)
 
-        if True:
+        if False:
             print(" \n Training on Stress Test and Original ")
             train_dataset = train_dataset.shuffle(seed=35)
             train_dataset = train_dataset.select(range(9000))
             
             dataset = datasets.load_dataset('pietrolesci/stress_tests_nli')
-            dataset = dataset['length_mismatch']
+            dataset = dataset['negation']
             dataset = dataset.select(range(9000))
             dataset = dataset.rename_column("sentence1", "premise")
             dataset = dataset.rename_column("sentence2", "hypothesis")
@@ -194,17 +194,18 @@ def main():
             # Adversary Attack for training
             if False:
                 print("\n Perturbing on training")
-               
-                perturbed_dataset_1 = adding_typos(train_dataset)
+                train_dataset = train_dataset.shuffle(seed=42)
+                #perturbed_dataset_1 = changing_first_noun(train_dataset)
+                
                 #eva = train_dataset.features.type == perturbed_dataset_1.features.type
-                perturbed_dataset_2 = addanyRandom__eb_p(train_dataset)
+                perturbed_dataset_1 = addanyRandom__eb_p(train_dataset)
                 #eva = train_dataset.features.type == perturbed_dataset.features.type
 
                 label = ClassLabel(num_classes=3, names=['entailment', 'neutral', 'contradiction'], id=None)
                 perturbed_dataset_1 = perturbed_dataset_1.cast_column("label", label)
-                perturbed_dataset_2 = perturbed_dataset_2.cast_column("label", label)
+                #perturbed_dataset_2 = perturbed_dataset_2.cast_column("label", label)
 
-                train_dataset = concatenate_datasets([train_dataset, perturbed_dataset_1, perturbed_dataset_2])
+                train_dataset = concatenate_datasets([train_dataset, perturbed_dataset_1])
                 train_dataset = train_dataset.shuffle(seed=42)
                 #print(" \n ------------- ")
                 #[print(ex) for ex in train_dataset]
@@ -275,7 +276,7 @@ def main():
             eval_dataset = eval_dataset.select(range(args.max_eval_samples))
         
         ###########################################################################
-        if True:
+        if False:
             # Addying perturbations 
             print(" \n Evaluation with perturbations ")
             #[print(ex) for ex in eval_dataset]
@@ -284,10 +285,10 @@ def main():
             #eval_dataset = changing_contractions(eval_dataset)
             #eval_dataset = expanding_contractions(eval_dataset)
             #eval_dataset = changing_names_entities(eval_dataset)
-            eval_dataset = changing_first_noun(eval_dataset)
+            #eval_dataset = changing_first_noun(eval_dataset)
             #eval_dataset = addany2_end(eval_dataset)
             #eval_dataset = addany2_begin(eval_dataset)
-            #eval_dataset = addanyRandom__eb_p(eval_dataset)
+            eval_dataset = addanyRandom__eb_p(eval_dataset)
             #WOB(eval_dataset)
             #eval_dataset = WOB(eval_dataset)
 

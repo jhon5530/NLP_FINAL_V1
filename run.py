@@ -162,11 +162,11 @@ def main():
         if True:
             print(" \n Training on Stress Test and Original ")
             train_dataset = train_dataset.shuffle(seed=35)
-            train_dataset = train_dataset.select(range(1500))
+            train_dataset = train_dataset.select(range(9000))
             
             dataset = datasets.load_dataset('pietrolesci/stress_tests_nli')
-            dataset = dataset['antonym']
-            dataset = dataset.select(range(1500))
+            dataset = dataset['spelling_error']
+            dataset = dataset.select(range(9000))
             dataset = dataset.rename_column("sentence1", "premise")
             dataset = dataset.rename_column("sentence2", "hypothesis")
             dataset = dataset.remove_columns("dtype")
@@ -225,14 +225,15 @@ def main():
 
      
     if training_args.do_eval:
-        eval_dataset = dataset[eval_split]
+        #eval_dataset = dataset[eval_split]
+        #eval_dataset = dataset["validation"]
+        eval_dataset = dataset["validation"]
 
-        # eval_dataset = dataset.shuffle(seed=2)
-        # eval_dataset = eval_dataset[eval_split]
         
         if False:
-            print(" \n Evaluation on Glue_adv ")
-            dataset = datasets.load_dataset('adv_glue', 'adv_mnli')
+            #It needs advance preparation
+            print(" \n Evaluation on SciTail ")
+            dataset = datasets.load_dataset('scitail', 'dgem_format')
             eval_dataset = dataset['validation']
             
         if False:
@@ -240,7 +241,7 @@ def main():
             dataset = datasets.load_dataset('anli')
             eval_dataset = dataset['test_r3']
 
-        if False:
+        if True:
             print("\n Evaluating on MNLI_matched dataset")
             dataset = datasets.load_dataset('multi_nli')
             eval_dataset = dataset['validation_matched']
@@ -288,7 +289,7 @@ def main():
             #eval_dataset = changing_first_noun(eval_dataset)
             #eval_dataset = addany2_end(eval_dataset)
             #eval_dataset = addany2_begin(eval_dataset)
-            eval_dataset = addanyRandom__eb_p(eval_dataset)
+            #eval_dataset = addanyRandom__eb_p(eval_dataset)
             #WOB(eval_dataset)
             #eval_dataset = WOB(eval_dataset)
 

@@ -7,7 +7,7 @@ import os
 import json
 from perturbations import adding_typos, changing_contractions, expanding_contractions
 from perturbations import  negating_hyp, changing_names_entities, changing_first_noun
-from perturbations import addany2_end, addany2_begin, addany2_eb_ph, WOB, addanyRandom__eb_ph, addanyRandom__eb_p
+from perturbations import addany2_end, addany2_begin, WOB, addanyRandom__eb_p
 
 # My imports
 import checklist
@@ -138,11 +138,11 @@ def main():
 
             dataset = datasets.load_dataset('anli')
             anli_dataset = dataset['train_r3']
-            anli_dataset = anli_dataset.shuffle(seed=34)
+            #anli_dataset = anli_dataset.shuffle(seed=34)
             anli_dataset = anli_dataset.select(range(25000))
 
             train_dataset = train_dataset.shuffle(seed=35)
-            train_dataset = train_dataset.select(range(50000))
+            train_dataset = train_dataset.select(range(100000))
             train_dataset = concatenate_datasets([train_dataset, anli_dataset])
             train_dataset = train_dataset.shuffle(seed=42)
 
@@ -152,21 +152,21 @@ def main():
             dataset = datasets.load_dataset('multi_nli')
             anli_dataset = dataset['train']
             anli_dataset = anli_dataset.shuffle(seed=34)
-            anli_dataset = anli_dataset.select(range(25000))
+            anli_dataset = anli_dataset.select(range(16000))
 
             train_dataset = train_dataset.shuffle(seed=35)
-            train_dataset = train_dataset.select(range(25000))
+            train_dataset = train_dataset.select(range(16000))
             train_dataset = concatenate_datasets([train_dataset, anli_dataset])
             train_dataset = train_dataset.shuffle(seed=42)
 
-        if False:
+        if True:
             print(" \n Training on Stress Test and Original ")
             train_dataset = train_dataset.shuffle(seed=35)
-            train_dataset = train_dataset.select(range(1000))
+            train_dataset = train_dataset.select(range(9000))
             
             dataset = datasets.load_dataset('pietrolesci/stress_tests_nli')
-            dataset = dataset['numerical_reasoning']
-            dataset = dataset.select(range(1000))
+            dataset = dataset['length_mismatch']
+            dataset = dataset.select(range(9000))
             dataset = dataset.rename_column("sentence1", "premise")
             dataset = dataset.rename_column("sentence2", "hypothesis")
             dataset = dataset.remove_columns("dtype")
@@ -192,7 +192,7 @@ def main():
                 train_dataset = train_dataset.shuffle(seed=42)
             #########################################################################
             # Adversary Attack for training
-            if True:
+            if False:
                 print("\n Perturbing on training")
                
                 perturbed_dataset_1 = adding_typos(train_dataset)
@@ -259,10 +259,10 @@ def main():
             dataset = datasets.load_dataset('glue', 'mnli_mismatched')
             eval_dataset = dataset['validation']
 
-        if True:
+        if False:
             print("\n Evaluating on Challenge stress sets")
             dataset = datasets.load_dataset('pietrolesci/stress_tests_nli')
-            dataset = dataset['word_overlap']
+            dataset = dataset['numerical_reasoning']
             dataset = dataset.shuffle(seed=66)
             dataset = dataset.select(range(1000))
             dataset = dataset.rename_column("sentence1", "premise")
@@ -275,7 +275,7 @@ def main():
             eval_dataset = eval_dataset.select(range(args.max_eval_samples))
         
         ###########################################################################
-        if False:
+        if True:
             # Addying perturbations 
             print(" \n Evaluation with perturbations ")
             #[print(ex) for ex in eval_dataset]
@@ -284,7 +284,7 @@ def main():
             #eval_dataset = changing_contractions(eval_dataset)
             #eval_dataset = expanding_contractions(eval_dataset)
             #eval_dataset = changing_names_entities(eval_dataset)
-            #eval_dataset = changing_first_noun(eval_dataset)
+            eval_dataset = changing_first_noun(eval_dataset)
             #eval_dataset = addany2_end(eval_dataset)
             #eval_dataset = addany2_begin(eval_dataset)
             #eval_dataset = addanyRandom__eb_p(eval_dataset)

@@ -16,7 +16,7 @@ from nltk.corpus import wordnet
 
 
 def adding_typos(dataset):
-    nTypos = 2
+    nTypos = 1
     sentences = dataset["hypothesis"]
     t = Perturb.perturb(sentences, Perturb.add_typos, nsamples=0, typos=nTypos, keep_original = False)
     new_dataset = [p[0] for p in t.data]

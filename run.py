@@ -139,12 +139,12 @@ def main():
             dataset = datasets.load_dataset('anli')
             anli_dataset = dataset['train_r3']
             #anli_dataset = anli_dataset.shuffle(seed=34)
-            anli_dataset = anli_dataset.select(range(25000))
+            train_dataset = anli_dataset.select(range(50000))
 
-            train_dataset = train_dataset.shuffle(seed=35)
-            train_dataset = train_dataset.select(range(100000))
-            train_dataset = concatenate_datasets([train_dataset, anli_dataset])
-            train_dataset = train_dataset.shuffle(seed=42)
+            #train_dataset = train_dataset.shuffle(seed=35)
+            #train_dataset = train_dataset.select(range(50000))
+            #train_dataset = concatenate_datasets([train_dataset, anli_dataset])
+            #train_dataset = train_dataset.shuffle(seed=42)
 
         if False:
             print(" \n Training on MNLI and Original ")
@@ -225,8 +225,7 @@ def main():
 
      
     if training_args.do_eval:
-        #eval_dataset = dataset[eval_split]
-        #eval_dataset = dataset["validation"]
+
         eval_dataset = dataset["validation"]
 
         
@@ -264,7 +263,7 @@ def main():
         if False:
             print("\n Evaluating on Challenge stress sets")
             dataset = datasets.load_dataset('pietrolesci/stress_tests_nli')
-            dataset = dataset['numerical_reasoning']
+            dataset = dataset['negation']
             dataset = dataset.shuffle(seed=66)
             dataset = dataset.select(range(1000))
             dataset = dataset.rename_column("sentence1", "premise")
@@ -277,7 +276,7 @@ def main():
             eval_dataset = eval_dataset.select(range(args.max_eval_samples))
         
         ###########################################################################
-        if False:
+        if True:
             # Addying perturbations 
             print(" \n Evaluation with perturbations ")
             #[print(ex) for ex in eval_dataset]

@@ -11,10 +11,6 @@ import nltk
 from nltk import word_tokenize, pos_tag
 from nltk.corpus import wordnet 
 
-#suite = TestSuite()
-
-
-
 def adding_typos(dataset):
     nTypos = 1
     sentences = dataset["hypothesis"]
@@ -316,8 +312,7 @@ def addany2_end(dataset):
                     if l.antonyms(): 
                         antonyms.append(l.antonyms()[0].name())
         vbg_ant = list(set(antonyms))
-        ###print("nouns_ant: ", nouns_ant)
-        ###print("vbg_ant: ", vbg_ant)
+
 
         new_aa = dt + nouns_ant + vbg_ant
         random.shuffle(new_aa)
@@ -328,7 +323,6 @@ def addany2_end(dataset):
             label.append(data["label"])
         else:
             hyp.append(data["hypothesis"])
-            ###print("AA: ", new_aa[:5])
             premises.append(data["premise"]+ " "+ ' '.join(new_aa[:5]))
             label.append(data["label"])
             
@@ -353,8 +347,6 @@ def addany2_begin(dataset):
         tokens = word_tokenize(data["hypothesis"])
 
         parts_of_speech = nltk.pos_tag(tokens)
-        ###print("-----", "\n")
-        ###print(parts_of_speech)
         nouns = list(filter(lambda x: x[1] == "NN", parts_of_speech))
         nouns_list = [n[0] for n in nouns]
         dt = list(filter(lambda x: x[1] == "DT", parts_of_speech))
@@ -489,9 +481,7 @@ def WOB(dataset):
         sim, dis = jaccard(d_p, d_h)
         if sim >0.25 and (data["label"] == 2 or data["label"] == 1) :
             number += 1
-            #print ("Premise: ", data["premise"])
-            #print ("Hypothesis: ", data["hypothesis"])
-            #print ("Idx: ", id, "# ", number, " Label: ", data["label"], " JS: ", sim)
+
             premises.append(data["premise"])
             hyp.append(data["hypothesis"])
             label.append(data["label"])            
